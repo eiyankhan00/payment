@@ -32,13 +32,26 @@
   <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-6">
     
     <!-- Header -->
-    <header class="flex items-center gap-4 pb-6 border-b border-slate-200">
-      <div class="bg-gradient-to-br from-blue-600 to-indigo-600 p-4 rounded-xl shadow-lg shadow-blue-200 text-white">
-        <i class="fa-solid fa-wallet text-2xl"></i>
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+      <div class="flex items-center gap-4">
+        <div class="bg-gradient-to-br from-blue-600 to-indigo-600 p-4 rounded-xl shadow-lg shadow-blue-200 text-white">
+          <i class="fa-solid fa-wallet text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Payment Tracker</h1>
+          <p class="text-sm text-slate-500 font-medium">Manage IDs, track payments & generate receipts</p>
+        </div>
       </div>
-      <div>
-        <h1 class="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Payment Tracker</h1>
-        <p class="text-sm text-slate-500 font-medium">Manage IDs, track payments & generate receipts</p>
+      
+      <!-- Backup & Restore Buttons -->
+      <div class="flex gap-2 bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+        <button onclick="exportData()" class="px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-semibold text-sm rounded-lg transition-colors flex items-center gap-2" title="Save Backup file (You can upload this to Google Drive)">
+          <i class="fa-solid fa-cloud-arrow-down"></i> Backup Data
+        </button>
+        <label class="cursor-pointer px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold text-sm rounded-lg transition-colors flex items-center gap-2" title="Restore from Backup file">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Restore Data
+          <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)">
+        </label>
       </div>
     </header>
 
@@ -135,8 +148,8 @@
                 <span class="text-sm font-medium opacity-80 uppercase tracking-wider">Grand Total</span>
                 <span id="grandTotalDisplay" class="text-2xl font-bold tracking-tight">৳ 0</span>
               </div>
-              <button type="submit" id="submitBtn" disabled
-                class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-md shadow-blue-500/20 flex justify-center items-center gap-2">
+              <button type="submit" id="submitBtn" 
+                class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md shadow-blue-500/20 flex justify-center items-center gap-2">
                 <i class="fa-solid fa-plus"></i> Save Record
               </button>
             </div>
@@ -160,11 +173,6 @@
             class="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none shadow-sm transition-all text-sm font-medium text-slate-700">
         </div>
 
-        <div id="loadingIndicator" class="text-center py-12 text-slate-400">
-          <i class="fa-solid fa-spinner fa-spin text-3xl mb-3"></i>
-          <p>Connecting to secure server...</p>
-        </div>
-
         <div id="emptyState" class="hidden bg-white p-12 text-center rounded-2xl border border-slate-200 shadow-sm text-slate-400">
           <i class="fa-solid fa-folder-open text-5xl mb-4 opacity-20"></i>
           <p class="font-medium text-slate-500">No payment records found.</p>
@@ -179,33 +187,102 @@
     </div>
   </div>
 
-  <!-- Firebase & App Logic -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, onSnapshot, setDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  <!-- Vanilla JavaScript Logic (No External Imports Required) -->
+  <script>
+    // Local Storage Key
+    const STORAGE_KEY = 'paymentTrackerData_pro';
 
-    // Safely parse configuration
-    let firebaseConfig = {};
-    try {
-      firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-    } catch (e) {
-      console.error("Config parse error", e);
-    }
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-    let currentUser = null;
+    // State Variables
     let recordsData = [];
-    let unsubscribeSnapshot = null;
+
+    // Load Data on Start
+    const loadData = () => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          recordsData = JSON.parse(saved);
+        }
+      } catch (err) {
+        // Log only on crash/error
+        console.error("Error loading data:", err);
+      }
+      renderRecords();
+    };
+
+    // Save Data to Local Storage
+    const saveData = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(recordsData));
+        renderRecords();
+      } catch (err) {
+        console.error("Error saving data:", err);
+      }
+    };
+
+    // Backup (Export) Data as JSON
+    window.exportData = () => {
+      if (recordsData.length === 0) {
+        alert("No data available to backup!");
+        return;
+      }
+      try {
+        const dataStr = JSON.stringify(recordsData, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Payment_Backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert("Backup file downloaded! You can now save this file to your Google Drive.");
+      } catch(err) {
+        console.error("Export Error:", err);
+      }
+    };
+
+    // Restore (Import) Data from JSON
+    window.importData = (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (Array.isArray(importedData)) {
+            // Merge data (prevent duplicate IDs if needed, but for now simple overwrite/merge)
+            if(confirm("Warning: This will merge imported data with your current records. Continue?")) {
+               // simple merge by avoiding duplicate IDs
+               const existingIds = new Set(recordsData.map(r => r.id));
+               importedData.forEach(item => {
+                 if(!existingIds.has(item.id)) {
+                   recordsData.push(item);
+                 }
+               });
+               // Sort descending by ID
+               recordsData.sort((a, b) => b.id - a.id);
+               saveData();
+               alert("Data restored successfully!");
+            }
+          } else {
+            alert("Invalid backup file format.");
+          }
+        } catch (err) {
+          console.error("Import Error:", err);
+          alert("Error reading the backup file.");
+        }
+      };
+      reader.readAsText(file);
+      // Reset input
+      event.target.value = '';
+    };
 
     // DOM Elements
     const form = document.getElementById('paymentForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const loadingIndicator = document.getElementById('loadingIndicator');
     const emptyState = document.getElementById('emptyState');
     const recordsContainer = document.getElementById('recordsContainer');
     const recordCount = document.getElementById('recordCount');
@@ -226,44 +303,6 @@
     const sub615x = document.getElementById('sub615x');
     
     const grandTotalDisplay = document.getElementById('grandTotalDisplay');
-
-    // Authentication Init
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (error) {
-        console.error("Auth Error:", error);
-      }
-    };
-
-    onAuthStateChanged(auth, (user) => {
-      currentUser = user;
-      if (user) {
-        submitBtn.disabled = false;
-        fetchRecords();
-      }
-    });
-
-    initAuth();
-
-    // Fetch Data
-    const fetchRecords = () => {
-      if (!currentUser) return;
-      if (unsubscribeSnapshot) unsubscribeSnapshot();
-
-      const recordsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'payments');
-      unsubscribeSnapshot = onSnapshot(recordsRef, (snapshot) => {
-        recordsData = snapshot.docs.map(doc => doc.data());
-        recordsData.sort((a, b) => b.id - a.id); // Descending order
-        renderRecords();
-      }, (error) => {
-        console.error("Fetch Error:", error);
-      });
-    };
 
     // Calculation Logic
     const calculateTotals = () => {
@@ -289,9 +328,8 @@
     });
 
     // Form Submit Handler
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', (e) => {
       e.preventDefault();
-      if (!currentUser) return;
 
       const totals = calculateTotals();
       if (totals.t1000x === 0 && totals.t615x === 0) {
@@ -320,57 +358,34 @@
         status615x: totals.t615x > 0 ? 'Pending' : 'N/A',
       };
 
-      try {
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
-        submitBtn.disabled = true;
-
-        await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'payments', newId.toString()), newRecord);
-        
-        // Reset Form
-        userNameInput.value = '';
-        numberInput.value = '';
-        qty1000x.value = '';
-        rate1000x.value = '';
-        qty615x.value = '';
-        rate615x.value = '';
-        dateInput.value = '';
-        calculateTotals();
-        
-      } catch (error) {
-        console.error("Save Error:", error);
-        alert("Failed to save data!");
-      } finally {
-        submitBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Save Record`;
-        submitBtn.disabled = false;
-      }
+      recordsData.unshift(newRecord); // Add to beginning
+      saveData();
+      
+      // Reset Form
+      userNameInput.value = '';
+      numberInput.value = '';
+      qty1000x.value = '';
+      rate1000x.value = '';
+      qty615x.value = '';
+      rate615x.value = '';
+      dateInput.value = '';
+      calculateTotals();
     });
 
-    // Global Action Handlers (Attached to window for inline onclick)
-    window.updateStatus = async (id, type, status) => {
-      if (!currentUser) return;
-      const target = recordsData.find(r => r.id === id);
-      if (!target) return;
-
-      const updated = { ...target };
-      if (type === '1000x') updated.status1000x = status;
-      if (type === '615x') updated.status615x = status;
-
-      try {
-        await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'payments', id.toString()), updated);
-      } catch (error) {
-        console.error("Update Status Error:", error);
+    // Global Action Handlers
+    window.updateStatus = (id, type, status) => {
+      const index = recordsData.findIndex(r => r.id === id);
+      if (index !== -1) {
+        if (type === '1000x') recordsData[index].status1000x = status;
+        if (type === '615x') recordsData[index].status615x = status;
+        saveData();
       }
     };
 
-    window.deleteRecord = async (id) => {
-      if (!currentUser) return;
+    window.deleteRecord = (id) => {
       if (confirm('Are you sure you want to permanently delete this record?')) {
-        try {
-          await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'payments', id.toString()));
-        } catch (error) {
-          console.error("Delete Error:", error);
-        }
+        recordsData = recordsData.filter(r => r.id !== id);
+        saveData();
       }
     };
 
@@ -378,7 +393,6 @@
       const record = recordsData.find(r => r.id === id);
       if(!record) return;
 
-      // Create a temporary hidden container for the receipt
       const wrapper = document.createElement('div');
       wrapper.style.position = 'absolute';
       wrapper.style.top = '-9999px';
@@ -395,15 +409,11 @@
 
       wrapper.innerHTML = `
         <div id="receiptContent" style="width: 600px; padding: 0; background: white; font-family: 'Inter', sans-serif; color: #1e293b; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-          
-          <!-- Header Gradient -->
           <div style="background: linear-gradient(135deg, #2563eb, #4f46e5); padding: 40px; color: white; text-align: center;">
             <h1 style="margin: 0; font-size: 36px; font-weight: 800; letter-spacing: -0.5px;">INVOICE</h1>
             <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 14px; font-weight: 500;">Transaction ID: #${record.id}</p>
           </div>
-          
           <div style="padding: 40px;">
-            <!-- Customer Info -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 35px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #f1f5f9;">
               <div>
                 <p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 600;">Customer</p>
@@ -415,8 +425,6 @@
                 <p style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">${record.date}</p>
               </div>
             </div>
-
-            <!-- Table -->
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
               <thead>
                 <tr style="border-bottom: 2px solid #e2e8f0; text-align: left;">
@@ -448,14 +456,10 @@
                 ` : ''}
               </tbody>
             </table>
-
-            <!-- Total Box -->
             <div style="background: #0f172a; color: white; padding: 24px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.2);">
               <span style="font-size: 18px; font-weight: 500; opacity: 0.9;">Grand Total</span>
               <span style="font-size: 28px; font-weight: 800; color: #22d3ee;">৳${record.grandTotal.toLocaleString('en-US')}</span>
             </div>
-
-            <!-- Footer with Eiyan Khan -->
             <div style="text-align: center; margin-top: 50px; font-size: 13px; color: #94a3b8; border-top: 2px dashed #e2e8f0; padding-top: 25px;">
               <p style="margin: 0 0 5px 0; font-weight: 500; font-size: 14px;">Thank you for your business!</p>
               <p style="margin: 0;">Verified Payment Receipt generated successfully.</p>
@@ -490,9 +494,6 @@
 
     // Render UI Logic
     const renderRecords = () => {
-      loadingIndicator.classList.add('hidden');
-      
-      // Filter records based on search input
       const searchTerm = searchInput.value.toLowerCase().trim();
       const filteredRecords = recordsData.filter(record => {
         return record.date.toLowerCase().includes(searchTerm) || 
@@ -505,7 +506,6 @@
         emptyState.classList.remove('hidden');
         recordsContainer.innerHTML = '';
         
-        // Update empty state message based on search result
         if (searchTerm && recordsData.length > 0) {
           emptyState.querySelector('p.font-medium').innerText = "No records found matching your search.";
           emptyState.querySelector('p.text-sm').innerText = "Try searching with a different date or name.";
@@ -565,8 +565,6 @@
 
         html += `
           <div class="bg-white rounded-2xl shadow-sm border border-slate-200 hover:border-blue-300 transition-all p-4 md:p-5">
-            
-            <!-- Card Header -->
             <div class="flex justify-between items-start mb-4 border-b border-slate-100 pb-4">
               <div>
                 <h3 class="text-lg md:text-xl font-bold text-slate-900">${record.userName}</h3>
@@ -578,37 +576,32 @@
                   <i class="fa-regular fa-calendar"></i> ${record.date}
                 </div>
               </div>
-              
               <button onclick="deleteRecord(${record.id})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete Record">
                 <i class="fa-regular fa-trash-can"></i>
               </button>
             </div>
-
-            <!-- Calculations -->
             <div class="space-y-3">
               ${renderActionSection('1000x', record.total1000x, record.status1000x)}
               ${renderActionSection('615x', record.total615x, record.status615x)}
             </div>
-
-            <!-- Card Footer (Total & Receipt) -->
             <div class="mt-5 pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Grand Total</span>
                 <div class="text-2xl font-black text-slate-900 leading-none mt-1">৳${record.grandTotal.toLocaleString('en-US')}</div>
               </div>
-              
-              <!-- Download Receipt Button -->
               <button onclick="downloadReceipt(${record.id})" class="w-full md:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2">
                 <i class="fa-solid fa-file-arrow-down"></i> Download Receipt
               </button>
             </div>
-
           </div>
         `;
       });
 
       recordsContainer.innerHTML = html;
     };
+
+    // Initialize App
+    loadData();
 
   </script>
 </body>
