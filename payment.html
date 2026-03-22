@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Tracker Pro</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- html2canvas for Receipt Download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen pb-12">
+
+  <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-6">
+    
+    <!-- Header -->
+    <header class="flex items-center gap-4 pb-6 border-b border-slate-200">
+      <div class="bg-gradient-to-br from-blue-600 to-indigo-600 p-4 rounded-xl shadow-lg shadow-blue-200 text-white">
+        <i class="fa-solid fa-wallet text-2xl"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Payment Tracker</h1>
+        <p class="text-sm text-slate-500 font-medium">Manage IDs, track payments & generate receipts</p>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Left Column: Form Section -->
+      <div class="lg:col-span-1">
+        <div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-6">
+          <h2 class="text-lg font-bold mb-5 flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-3">
+            <i class="fa-solid fa-circle-plus text-blue-600"></i> New Record
+          </h2>
+          
+          <form id="paymentForm" class="space-y-5">
+            
+            <!-- Basic Info -->
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <i class="fa-regular fa-calendar text-blue-500"></i> Date
+                </label>
+                <input type="text" id="dateInput" placeholder="e.g., 22 March 2026" required
+                  class="w-full px-4 py-2.5 bg-amber-50 border-2 border-amber-300 rounded-xl focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 outline-none font-semibold text-slate-800 transition-all placeholder:font-normal">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">User Name</label>
+                <input type="text" id="userName" placeholder="Enter full name" required
+                  class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all">
+              </div>
+              
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Method</label>
+                  <select id="method" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all appearance-none cursor-pointer">
+                    <option value="bKash">bKash</option>
+                    <option value="Nagad">Nagad</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Account A/C</label>
+                  <input type="text" id="number" placeholder="017XXXXXXX" required
+                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-mono">
+                </div>
+              </div>
+            </div>
+
+            <!-- ID Type 1000x -->
+            <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 space-y-3">
+              <h3 class="font-bold text-blue-800 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-tag"></i> ID Type: 1000x
+              </h3>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1">Valid Qty</label>
+                  <input type="number" id="qty1000x" placeholder="0" min="0"
+                    class="calc-input w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1">Rate (৳)</label>
+                  <input type="number" id="rate1000x" placeholder="0.00" min="0" step="0.01"
+                    class="calc-input w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+              </div>
+              <div class="text-right text-sm font-semibold text-slate-600">
+                Subtotal: <span id="sub1000x" class="text-blue-600 font-bold">৳ 0</span>
+              </div>
+            </div>
+
+            <!-- ID Type 615x -->
+            <div class="bg-purple-50/50 p-4 rounded-xl border border-purple-100 space-y-3">
+              <h3 class="font-bold text-purple-800 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-tag"></i> ID Type: 615x
+              </h3>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1">Valid Qty</label>
+                  <input type="number" id="qty615x" placeholder="0" min="0"
+                    class="calc-input w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1">Rate (৳)</label>
+                  <input type="number" id="rate615x" placeholder="0.00" min="0" step="0.01"
+                    class="calc-input w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+              </div>
+              <div class="text-right text-sm font-semibold text-slate-600">
+                Subtotal: <span id="sub615x" class="text-purple-600 font-bold">৳ 0</span>
+              </div>
+            </div>
+
+            <!-- Total & Submit -->
+            <div class="pt-2">
+              <div class="flex justify-between items-center mb-4 bg-slate-900 text-white p-4 rounded-xl shadow-md">
+                <span class="text-sm font-medium opacity-80 uppercase tracking-wider">Grand Total</span>
+                <span id="grandTotalDisplay" class="text-2xl font-bold tracking-tight">৳ 0</span>
+              </div>
+              <button type="submit" id="submitBtn" disabled
+                class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-md shadow-blue-500/20 flex justify-center items-center gap-2">
+                <i class="fa-solid fa-plus"></i> Save Record
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right Column: List Section -->
+      <div class="lg:col-span-2 space-y-4">
+        <h2 class="text-lg font-bold flex items-center gap-2 mb-4 text-slate-800">
+          <i class="fa-solid fa-list-check text-slate-500"></i> Payment Records 
+          <span id="recordCount" class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">0</span>
+        </h2>
+
+        <!-- Search Bar -->
+        <div class="relative mb-4">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+          </div>
+          <input type="text" id="searchInput" placeholder="Search by date (e.g., 22 March) or user name..." 
+            class="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none shadow-sm transition-all text-sm font-medium text-slate-700">
+        </div>
+
+        <div id="loadingIndicator" class="text-center py-12 text-slate-400">
+          <i class="fa-solid fa-spinner fa-spin text-3xl mb-3"></i>
+          <p>Connecting to secure server...</p>
+        </div>
+
+        <div id="emptyState" class="hidden bg-white p-12 text-center rounded-2xl border border-slate-200 shadow-sm text-slate-400">
+          <i class="fa-solid fa-folder-open text-5xl mb-4 opacity-20"></i>
+          <p class="font-medium text-slate-500">No payment records found.</p>
+          <p class="text-sm">Add a new payment from the left panel.</p>
+        </div>
+
+        <div id="recordsContainer" class="grid gap-4">
+          <!-- Records will be injected here via JS -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Firebase & App Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot, setDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Safely parse configuration
+    let firebaseConfig = {};
+    try {
+      firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    } catch (e) {
+      console.error("Config parse error", e);
+    }
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+    let currentUser = null;
+    let recordsData = [];
+    let unsubscribeSnapshot = null;
+
+    // DOM Elements
+    const form = document.getElementById('paymentForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const emptyState = document.getElementById('emptyState');
+    const recordsContainer = document.getElementById('recordsContainer');
+    const recordCount = document.getElementById('recordCount');
+    const searchInput = document.getElementById('searchInput');
+
+    // Input fields
+    const dateInput = document.getElementById('dateInput');
+    const userNameInput = document.getElementById('userName');
+    const methodInput = document.getElementById('method');
+    const numberInput = document.getElementById('number');
+    
+    const qty1000x = document.getElementById('qty1000x');
+    const rate1000x = document.getElementById('rate1000x');
+    const sub1000x = document.getElementById('sub1000x');
+    
+    const qty615x = document.getElementById('qty615x');
+    const rate615x = document.getElementById('rate615x');
+    const sub615x = document.getElementById('sub615x');
+    
+    const grandTotalDisplay = document.getElementById('grandTotalDisplay');
+
+    // Authentication Init
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (error) {
+        console.error("Auth Error:", error);
+      }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      if (user) {
+        submitBtn.disabled = false;
+        fetchRecords();
+      }
+    });
+
+    initAuth();
+
+    // Fetch Data
+    const fetchRecords = () => {
+      if (!currentUser) return;
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+      const recordsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'payments');
+      unsubscribeSnapshot = onSnapshot(recordsRef, (snapshot) => {
+        recordsData = snapshot.docs.map(doc => doc.data());
+        recordsData.sort((a, b) => b.id - a.id); // Descending order
+        renderRecords();
+      }, (error) => {
+        console.error("Fetch Error:", error);
+      });
+    };
+
+    // Calculation Logic
+    const calculateTotals = () => {
+      const q1 = Number(qty1000x.value) || 0;
+      const r1 = Number(rate1000x.value) || 0;
+      const t1000x = q1 * r1;
+      
+      const q6 = Number(qty615x.value) || 0;
+      const r6 = Number(rate615x.value) || 0;
+      const t615x = q6 * r6;
+
+      const total = t1000x + t615x;
+
+      sub1000x.innerText = `৳ ${t1000x.toLocaleString('en-US')}`;
+      sub615x.innerText = `৳ ${t615x.toLocaleString('en-US')}`;
+      grandTotalDisplay.innerText = `৳ ${total.toLocaleString('en-US')}`;
+
+      return { t1000x, t615x, total };
+    };
+
+    document.querySelectorAll('.calc-input').forEach(input => {
+      input.addEventListener('input', calculateTotals);
+    });
+
+    // Form Submit Handler
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const totals = calculateTotals();
+      if (totals.t1000x === 0 && totals.t615x === 0) {
+        alert("Please enter valid quantity and rate for at least one ID type (1000x or 615x)!");
+        return;
+      }
+
+      const newId = Date.now();
+      const newRecord = {
+        id: newId,
+        date: dateInput.value,
+        userName: userNameInput.value,
+        method: methodInput.value,
+        number: numberInput.value,
+        
+        qty1000x: Number(qty1000x.value) || 0,
+        rate1000x: Number(rate1000x.value) || 0,
+        total1000x: totals.t1000x,
+        
+        qty615x: Number(qty615x.value) || 0,
+        rate615x: Number(rate615x.value) || 0,
+        total615x: totals.t615x,
+        
+        grandTotal: totals.total,
+        status1000x: totals.t1000x > 0 ? 'Pending' : 'N/A',
+        status615x: totals.t615x > 0 ? 'Pending' : 'N/A',
+      };
+
+      try {
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
+        submitBtn.disabled = true;
+
+        await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'payments', newId.toString()), newRecord);
+        
+        // Reset Form
+        userNameInput.value = '';
+        numberInput.value = '';
+        qty1000x.value = '';
+        rate1000x.value = '';
+        qty615x.value = '';
+        rate615x.value = '';
+        dateInput.value = '';
+        calculateTotals();
+        
+      } catch (error) {
+        console.error("Save Error:", error);
+        alert("Failed to save data!");
+      } finally {
+        submitBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Save Record`;
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Global Action Handlers (Attached to window for inline onclick)
+    window.updateStatus = async (id, type, status) => {
+      if (!currentUser) return;
+      const target = recordsData.find(r => r.id === id);
+      if (!target) return;
+
+      const updated = { ...target };
+      if (type === '1000x') updated.status1000x = status;
+      if (type === '615x') updated.status615x = status;
+
+      try {
+        await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'payments', id.toString()), updated);
+      } catch (error) {
+        console.error("Update Status Error:", error);
+      }
+    };
+
+    window.deleteRecord = async (id) => {
+      if (!currentUser) return;
+      if (confirm('Are you sure you want to permanently delete this record?')) {
+        try {
+          await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'payments', id.toString()));
+        } catch (error) {
+          console.error("Delete Error:", error);
+        }
+      }
+    };
+
+    window.downloadReceipt = async (id) => {
+      const record = recordsData.find(r => r.id === id);
+      if(!record) return;
+
+      // Create a temporary hidden container for the receipt
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'absolute';
+      wrapper.style.top = '-9999px';
+      wrapper.style.left = '-9999px';
+      
+      const is1000xValid = record.total1000x > 0;
+      const is615xValid = record.total615x > 0;
+
+      const getStatusBadge = (status) => {
+        if(status === 'Paid') return `<span style="color: #16a34a; font-weight: bold; background: #dcfce7; padding: 3px 10px; border-radius: 12px; font-size: 11px;">PAID</span>`;
+        if(status === 'Rejected') return `<span style="color: #dc2626; font-weight: bold; background: #fee2e2; padding: 3px 10px; border-radius: 12px; font-size: 11px;">REJECTED</span>`;
+        return `<span style="color: #ca8a04; font-weight: bold; background: #fef9c3; padding: 3px 10px; border-radius: 12px; font-size: 11px;">PENDING</span>`;
+      };
+
+      wrapper.innerHTML = `
+        <div id="receiptContent" style="width: 600px; padding: 0; background: white; font-family: 'Inter', sans-serif; color: #1e293b; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+          
+          <!-- Header Gradient -->
+          <div style="background: linear-gradient(135deg, #2563eb, #4f46e5); padding: 40px; color: white; text-align: center;">
+            <h1 style="margin: 0; font-size: 36px; font-weight: 800; letter-spacing: -0.5px;">INVOICE</h1>
+            <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 14px; font-weight: 500;">Transaction ID: #${record.id}</p>
+          </div>
+          
+          <div style="padding: 40px;">
+            <!-- Customer Info -->
+            <div style="display: flex; justify-content: space-between; margin-bottom: 35px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #f1f5f9;">
+              <div>
+                <p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 600;">Customer</p>
+                <p style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">${record.userName}</p>
+                <p style="margin: 5px 0 0 0; font-size: 14px; color: #475569; font-weight: 500;">${record.method} - ${record.number}</p>
+              </div>
+              <div style="text-align: right;">
+                <p style="margin: 0 0 5px 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 600;">Date</p>
+                <p style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">${record.date}</p>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+              <thead>
+                <tr style="border-bottom: 2px solid #e2e8f0; text-align: left;">
+                  <th style="padding: 0 0 12px 0; font-size: 13px; color: #64748b; text-transform: uppercase;">Description</th>
+                  <th style="padding: 0 0 12px 0; font-size: 13px; color: #64748b; text-transform: uppercase; text-align: center;">Qty x Rate</th>
+                  <th style="padding: 0 0 12px 0; font-size: 13px; color: #64748b; text-transform: uppercase; text-align: right;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${is1000xValid ? `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 20px 0; font-weight: 600; font-size: 15px;">
+                    ID Type: 1000x <br>
+                    <div style="margin-top: 6px;">${getStatusBadge(record.status1000x)}</div>
+                  </td>
+                  <td style="padding: 20px 0; text-align: center; color: #475569; font-weight: 500;">${record.qty1000x} × ৳${record.rate1000x}</td>
+                  <td style="padding: 20px 0; text-align: right; font-weight: 700; font-size: 16px;">৳${record.total1000x.toLocaleString('en-US')}</td>
+                </tr>
+                ` : ''}
+                ${is615xValid ? `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 20px 0; font-weight: 600; font-size: 15px;">
+                    ID Type: 615x <br>
+                    <div style="margin-top: 6px;">${getStatusBadge(record.status615x)}</div>
+                  </td>
+                  <td style="padding: 20px 0; text-align: center; color: #475569; font-weight: 500;">${record.qty615x} × ৳${record.rate615x}</td>
+                  <td style="padding: 20px 0; text-align: right; font-weight: 700; font-size: 16px;">৳${record.total615x.toLocaleString('en-US')}</td>
+                </tr>
+                ` : ''}
+              </tbody>
+            </table>
+
+            <!-- Total Box -->
+            <div style="background: #0f172a; color: white; padding: 24px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.2);">
+              <span style="font-size: 18px; font-weight: 500; opacity: 0.9;">Grand Total</span>
+              <span style="font-size: 28px; font-weight: 800; color: #22d3ee;">৳${record.grandTotal.toLocaleString('en-US')}</span>
+            </div>
+
+            <!-- Footer with Eiyan Khan -->
+            <div style="text-align: center; margin-top: 50px; font-size: 13px; color: #94a3b8; border-top: 2px dashed #e2e8f0; padding-top: 25px;">
+              <p style="margin: 0 0 5px 0; font-weight: 500; font-size: 14px;">Thank you for your business!</p>
+              <p style="margin: 0;">Verified Payment Receipt generated successfully.</p>
+              <p style="margin: 15px 0 0 0; font-size: 15px;">Generated by <span style="color: #2563eb; font-weight: 800;">Eiyan Khan</span></p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(wrapper);
+
+      try {
+        const canvas = await html2canvas(wrapper.querySelector('#receiptContent'), { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const link = document.createElement('a');
+        link.download = `Receipt_${record.userName.replace(/\s+/g, '_')}_${record.id}.png`;
+        link.href = imgData;
+        link.click();
+      } catch(err) {
+        console.error("Receipt Gen Error", err);
+        alert("Failed to generate receipt");
+      } finally {
+        document.body.removeChild(wrapper);
+      }
+    };
+
+    // Live Search Event Listener
+    searchInput.addEventListener('input', () => {
+      renderRecords();
+    });
+
+    // Render UI Logic
+    const renderRecords = () => {
+      loadingIndicator.classList.add('hidden');
+      
+      // Filter records based on search input
+      const searchTerm = searchInput.value.toLowerCase().trim();
+      const filteredRecords = recordsData.filter(record => {
+        return record.date.toLowerCase().includes(searchTerm) || 
+               record.userName.toLowerCase().includes(searchTerm);
+      });
+
+      recordCount.innerText = filteredRecords.length;
+
+      if (filteredRecords.length === 0) {
+        emptyState.classList.remove('hidden');
+        recordsContainer.innerHTML = '';
+        
+        // Update empty state message based on search result
+        if (searchTerm && recordsData.length > 0) {
+          emptyState.querySelector('p.font-medium').innerText = "No records found matching your search.";
+          emptyState.querySelector('p.text-sm').innerText = "Try searching with a different date or name.";
+        } else {
+          emptyState.querySelector('p.font-medium').innerText = "No payment records found.";
+          emptyState.querySelector('p.text-sm').innerText = "Add a new payment from the left panel.";
+        }
+        return;
+      }
+      
+      emptyState.classList.add('hidden');
+      
+      let html = '';
+      filteredRecords.forEach(record => {
+        
+        const renderActionSection = (type, total, status) => {
+          if(total === 0) return '';
+          
+          let actionHTML = '';
+          if(status === 'Pending') {
+            actionHTML = `
+              <div class="flex items-center gap-1.5 w-full sm:w-auto mt-2 sm:mt-0">
+                <button onclick="updateStatus(${record.id}, '${type}', 'Paid')" class="flex-1 sm:flex-none px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded text-xs font-bold transition-colors shadow-sm"><i class="fa-solid fa-check"></i> Accept</button>
+                <button onclick="updateStatus(${record.id}, '${type}', 'Rejected')" class="flex-1 sm:flex-none px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs font-bold transition-colors"><i class="fa-solid fa-xmark"></i> Reject</button>
+              </div>
+            `;
+          } else {
+            const badgeClass = status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+            const icon = status === 'Paid' ? 'fa-check-circle' : 'fa-times-circle';
+            actionHTML = `
+              <span class="px-3 py-1 text-xs font-bold rounded-full ${badgeClass} mt-2 sm:mt-0 flex items-center gap-1">
+                <i class="fa-solid ${icon}"></i> ${status}
+              </span>
+            `;
+          }
+
+          const colors = type === '1000x' ? 'bg-blue-50/50 border-blue-100 text-blue-800' : 'bg-purple-50/50 border-purple-100 text-purple-800';
+          const qty = type === '1000x' ? record.qty1000x : record.qty615x;
+          const rate = type === '1000x' ? record.rate1000x : record.rate615x;
+
+          return `
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center p-3 rounded-xl border ${colors}">
+              <div>
+                <span class="font-bold text-sm block mb-0.5"><i class="fa-solid fa-tag opacity-50 mr-1"></i> ${type} ID Calc:</span>
+                <div class="text-sm text-slate-700">
+                  ${qty} × ৳${rate} = <span class="font-bold">৳${total.toLocaleString('en-US')}</span>
+                </div>
+              </div>
+              ${actionHTML}
+            </div>
+          `;
+        };
+
+        const methodBadge = record.method === 'bKash' 
+          ? '<span class="bg-pink-100 text-pink-700 px-2 py-0.5 rounded text-xs font-bold"><i class="fa-solid fa-paper-plane mr-1"></i>bKash</span>' 
+          : '<span class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs font-bold"><i class="fa-solid fa-bolt mr-1"></i>Nagad</span>';
+
+        html += `
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 hover:border-blue-300 transition-all p-4 md:p-5">
+            
+            <!-- Card Header -->
+            <div class="flex justify-between items-start mb-4 border-b border-slate-100 pb-4">
+              <div>
+                <h3 class="text-lg md:text-xl font-bold text-slate-900">${record.userName}</h3>
+                <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                  ${methodBadge}
+                  <span class="text-sm font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">${record.number}</span>
+                </div>
+                <div class="inline-flex items-center gap-1.5 mt-2.5 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold rounded-md">
+                  <i class="fa-regular fa-calendar"></i> ${record.date}
+                </div>
+              </div>
+              
+              <button onclick="deleteRecord(${record.id})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete Record">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </div>
+
+            <!-- Calculations -->
+            <div class="space-y-3">
+              ${renderActionSection('1000x', record.total1000x, record.status1000x)}
+              ${renderActionSection('615x', record.total615x, record.status615x)}
+            </div>
+
+            <!-- Card Footer (Total & Receipt) -->
+            <div class="mt-5 pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Grand Total</span>
+                <div class="text-2xl font-black text-slate-900 leading-none mt-1">৳${record.grandTotal.toLocaleString('en-US')}</div>
+              </div>
+              
+              <!-- Download Receipt Button -->
+              <button onclick="downloadReceipt(${record.id})" class="w-full md:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2">
+                <i class="fa-solid fa-file-arrow-down"></i> Download Receipt
+              </button>
+            </div>
+
+          </div>
+        `;
+      });
+
+      recordsContainer.innerHTML = html;
+    };
+
+  </script>
+</body>
+</html>
